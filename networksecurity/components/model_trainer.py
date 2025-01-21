@@ -2,6 +2,10 @@ import os
 import sys
 import mlflow
 
+import dagshub
+dagshub.init(repo_owner='rishabhislive', repo_name='network_security', mlflow=True)
+
+
 from networksecurity.exception.exception import NetworkSecurityException 
 from networksecurity.logging.logger import logging
 
@@ -105,7 +109,9 @@ class ModelTrainer:
 
         y_test_pred=best_model.predict(X_test)
 
-        classification_train_metric=get_classification_score(y_true=y_test,y_pred=y_test_pred)
+        classification_test_metric=get_classification_score(y_true=y_test,y_pred=y_test_pred)
+
+        self.track_mlflow(best_model,classification_test_metric)
         preprocessor=load_object(file_path=self.data_transformation_artifact.transformed_object_file_path)
 
         model_dir_path=os.path.dirname(self.model_trainer_config.trained_model_file_path)
@@ -113,6 +119,8 @@ class ModelTrainer:
 
         Network_Model=NetworkModel(preprocessor=preprocessor,model=best_model)
         save_object(self.model_trainer_config.trained_model_file_path,obj=NetworkModel)
+
+        save_object("final_model/model.pkl",best_model)
 
         ## model trainer Artifact
         model_trainer_artifact=ModelTrainerArtifact(
